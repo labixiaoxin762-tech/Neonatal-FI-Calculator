@@ -86,12 +86,15 @@ with left:
     st.subheader("Patient information")
 
     feeding_delay_label = st.selectbox(
-        "Delayed feeding",
-        options=["No", "Yes"],
+        "Delayed feeding (>24 h)",
+        options=["No (≤24 h)", "Yes (>24 h)"],
         index=0,
-        help="No = 0; Yes = 1. Use the same definition as in the study dataset.",
+        help=(
+            "Defined by time to initiation of enteral feeding after birth: "
+            "No = ≤24 h; Yes = >24 h."
+        ),
     )
-    feeddelay = 1 if feeding_delay_label == "Yes" else 0
+    feeddelay = 1 if feeding_delay_label == "Yes (>24 h)" else 0
 
     transfusion_label = st.selectbox(
         "Blood transfusion",
@@ -110,13 +113,13 @@ with left:
     )
 
     tbil = st.number_input(
-        "Total bilirubin",
+        "Total bilirubin (μmol/L)",
         value=93.5,
         step=1.0,
         format="%.2f",
         help=(
-            "Enter total bilirubin using exactly the same unit as the model-development dataset. "
-            "Development-data range in the fitted model: 5.7–309.4."
+            "Enter total bilirubin in μmol/L. "
+            "Development-data range in the fitted model: 5.7–309.4 μmol/L."
         ),
     )
 
@@ -204,7 +207,7 @@ with right:
         shap_df = pd.DataFrame({
             "Feature": [DISPLAY_NAME[f] for f in EXPECTED_FEATURES],
             "Input value": [
-                "Yes" if feeddelay == 1 else "No",
+                "Yes (>24 h)" if feeddelay == 1 else "No (≤24 h)",
                 "Yes" if bloodtransfusion == 1 else "No",
                 f"{gestationalgeweek:g}",
                 f"{tbil:g}",
