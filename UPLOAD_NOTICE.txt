@@ -1,0 +1,9 @@
+PUBLIC DEPLOYMENT PACKAGE
+
+This package intentionally excludes:
+- final_model_test_predictions_for_web_check.csv
+- VALIDATION_SUMMARY.txt
+
+Those files are for internal verification only and should not be uploaded to a public GitHub repository.
+
+Upload all files in this folder to the ROOT of the GitHub repository.
