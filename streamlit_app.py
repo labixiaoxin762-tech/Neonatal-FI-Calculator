@@ -79,44 +79,62 @@ st.info(
     "This calculator reproduces the fixed final LightGBM model used in the study. "
     "It does not re-train, re-tune, or recalibrate the model."
 )
+st.caption(
+    "Intended users: NICU clinicians and researchers familiar with neonatal care. "
+    "All five predictor fields must be explicitly completed before a prediction can be generated."
+)
 
 left, right = st.columns([1.05, 1.25], gap="large")
 
 with left:
     st.subheader("Patient information")
+    st.caption("* All five fields are required. No default patient values are used.")
 
     feeding_delay_label = st.selectbox(
-        "Delayed feeding (>24 h)",
+        "Delayed feeding (>24 h) *",
         options=["No (≤24 h)", "Yes (>24 h)"],
-        index=0,
+        index=None,
+        placeholder="Select an option",
         help=(
             "Defined by time to initiation of enteral feeding after birth: "
             "No = ≤24 h; Yes = >24 h."
         ),
     )
-    feeddelay = 1 if feeding_delay_label == "Yes (>24 h)" else 0
+    if feeding_delay_label is None:
+        feeddelay = None
+    else:
+        feeddelay = 1 if feeding_delay_label == "Yes (>24 h)" else 0
 
     transfusion_label = st.selectbox(
-        "Blood transfusion",
+        "Blood transfusion *",
         options=["No", "Yes"],
-        index=0,
-        help="No = 0; Yes = 1. Use the same definition and time window as in the study dataset.",
+        index=None,
+        placeholder="Select an option",
+        help=(
+            "No = 0; Yes = 1. Use the same definition and time window as in the study dataset "
+            "(within the first 14 days after birth)."
+        ),
     )
-    bloodtransfusion = 1 if transfusion_label == "Yes" else 0
+    if transfusion_label is None:
+        bloodtransfusion = None
+    else:
+        bloodtransfusion = 1 if transfusion_label == "Yes" else 0
 
     gestationalgeweek = st.number_input(
-        "Gestational age (weeks)",
-        value=32.0,
-        step=1.0,
+        "Gestational age (weeks) *",
+        value=None,
+        step=0.1,
         format="%.1f",
+        placeholder="Enter gestational age",
         help="Development-data range in the fitted model: 26–41 weeks.",
     )
 
     tbil = st.number_input(
-        "Total bilirubin (μmol/L)",
-        value=93.5,
-        step=1.0,
+        "Total bilirubin (μmol/L) *",
+        value=None,
+        step=0.1,
         format="%.2f",
+        placeholder="Enter total bilirubin",
         help=(
             "Enter total bilirubin in μmol/L. "
             "Development-data range in the fitted model: 5.7–309.4 μmol/L."
@@ -124,12 +142,26 @@ with left:
     )
 
     birthweight = st.number_input(
-        "Birth weight (g)",
-        value=1750.0,
+        "Birth weight (g) *",
+        value=None,
         step=10.0,
         format="%.0f",
+        placeholder="Enter birth weight",
         help="Development-data range in the fitted model: 890–3950 g.",
     )
+
+    required_inputs = {
+        "Delayed feeding": feeddelay,
+        "Blood transfusion": bloodtransfusion,
+        "Gestational age": gestationalgeweek,
+        "Total bilirubin": tbil,
+        "Birth weight": birthweight,
+    }
+    missing_fields = [
+        name for name, value in required_inputs.items()
+        if value is None
+    ]
+    all_fields_complete = len(missing_fields) == 0
 
     outside = []
     for key, value in {
@@ -137,21 +169,34 @@ with left:
         "tbil": tbil,
         "birthweight": birthweight,
     }.items():
+        if value is None:
+            continue
         low, high = DEVELOPMENT_RANGE[key]
         if value < low or value > high:
-            outside.append(f"{DISPLAY_NAME[key]} ({value:g}; development range {low:g}–{high:g})")
+            outside.append(
+                f"{DISPLAY_NAME[key]} ({value:g}; development range {low:g}–{high:g})"
+            )
 
     if outside:
         st.warning(
             "One or more values are outside the range observed in the model-development data: "
             + "; ".join(outside)
-            + ". The model can still return a value, but extrapolation should be interpreted cautiously."
+            + ". A prediction can still be generated, but it represents extrapolation beyond "
+              "the observed development-data range and should be interpreted cautiously."
+        )
+
+    if missing_fields:
+        st.info(
+            "Complete all five required fields before calculation. Missing: "
+            + ", ".join(missing_fields)
+            + "."
         )
 
     calculate = st.button(
         "Calculate FI probability",
         type="primary",
         use_container_width=True,
+        disabled=not all_fields_complete,
     )
 
 with right:
@@ -277,6 +322,7 @@ with st.expander("Model information"):
     )
 
 st.caption(
-    "Research-use tool. The output is intended to support model evaluation and research reporting "
-    "and should not replace clinical judgment."
+    "Research-use tool intended for NICU clinicians and researchers familiar with neonatal care. "
+    "The output is intended to support model evaluation and research reporting and should not "
+    "replace clinical judgment or be used as a stand-alone treatment or nursing decision rule."
 )
