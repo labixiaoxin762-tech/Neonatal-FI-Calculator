@@ -72,7 +72,9 @@ DISPLAY_NAME = {
 
 st.title("Neonatal Feeding Intolerance Risk Calculator")
 st.caption(
-    "Interpretable 5-feature LightGBM model for predicting feeding intolerance (FI)"
+    "An interpretable 5-feature LightGBM model using information "
+    "available by postnatal day 7 to predict feeding intolerance "
+    "defined by enteral feeding volume on postnatal day 14."
 )
 
 st.info(
@@ -111,8 +113,8 @@ with left:
         index=None,
         placeholder="Select an option",
         help=(
-            "No = 0; Yes = 1. Use the same definition and time window as in the study dataset "
-            "(within the first 14 days after birth)."
+            "No = 0; Yes = 1. Blood transfusion received "
+            "within the first 7 postnatal days (168 hours after birth)."
         ),
     )
     if transfusion_label is None:
